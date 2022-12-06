@@ -1,0 +1,8 @@
+# probably needs numpy
+numpy
+# need bokeh
+bokeh
+# might need h5py, if visualization is using it
+#h5py
+# add other non-standard libraries as needed
+

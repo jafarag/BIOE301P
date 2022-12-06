@@ -1,0 +1,101 @@
+variables:
+  GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_CONCURRENT_ID/$CI_PROJECT_PATH
+
+stages: # define the stages for the pipeline
+  - download
+  - convert
+  - scatter
+  - gather
+  - visualize
+  - rclone
+
+download-dset01:
+  stage: download
+  variables:
+    SCHEDULER_PARAMETERS: " -c 1 --mem-per-cpu 2G -t 0:10:0"
+  tags:
+    - FarmCloud
+  script:
+    - ./wget_file.sh
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - when: always
+
+
+
+convert-dset01:
+  stage: convert
+  variables:
+    SCHEDULER_PARAMETERS: "-c 2 --mem-per-cpu 3G -t 0:30:0"
+  tags:
+    - FarmCloud
+  script:
+    - $CESP convh5py.py
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - when: always
+
+
+scatter-dset01:
+  stage: scatter
+  variables:
+    SCHEDULER_PARAMETERS: "-c 2 --mem-per-cpu 3G -t 0:30:0"
+  tags:
+    - FarmCloud
+  script:
+    - $CESP analysis_scat.py
+  parallel:
+    matrix:
+    - PART_ID:["1", "2"]
+      SLURM_ARRAY_TASK_ID:
+        - ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - when: always
+    
+    
+    
+    
+gather-dset01:
+  stage: gather
+  variables:
+    SCHEDULER_PARAMETERS: "-c 1 --mem-per-cpu 4G -t 0:30:0"
+    PART_ID: "1"
+  tags:
+    - FarmCloud
+  script:
+    - $CESP analysis_gath.py
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - when: always
+    
+visualize-dset01:
+  stage: visualize
+  variables:
+    SCHEDULER_PARAMETERS: "-c 2 --mem-per-cpu 2G -t 0:30:0"
+  tags:
+    - FarmCloud
+  script:
+    - $CESP visualize.py
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - when: always
+    
+
+rclone-dset01:
+  stage: rclone
+  variables:
+    SCHEDULER_PARAMETERS: "-c 2 --mem-per-cpu 2G -t 0:30:0"
+  tags:
+    - FarmCloud
+  script:
+    - $CESP rclone.py
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - when: always
